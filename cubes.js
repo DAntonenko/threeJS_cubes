@@ -1,7 +1,3 @@
-// Serial numbers of spheres (in 'Cube.spheres' array) which mast be connected with edge lines
-const edges = [[0, 1], [1, 3], [2, 0], [3, 2], [4, 5], [5, 7], [6, 4], [7, 6], [0, 4], [1, 5], [2, 6], [3, 7]];
-let lines = [];
-
 class Sphere extends THREE.Mesh {
   constructor(x, y, z, color) {
     super(new THREE.SphereGeometry(0.1, 13, 13), new THREE.MeshBasicMaterial({color: color}));
@@ -12,14 +8,16 @@ class Sphere extends THREE.Mesh {
 }
 
 class Cube extends THREE.Object3D {
-  constructor() {
+  constructor(centerX, centerY, centerZ) {
     super(new THREE.Group());
+    this.edges = [[0, 1], [1, 3], [2, 0], [3, 2], [4, 5], [5, 7], [6, 4], [7, 6], [0, 4], [1, 5], [2, 6], [3, 7]]; // Serial numbers of spheres (in 'this.spheres' array) which mast be connected with edge lines
     this.spheres = [];
+    this.lines = [];
 
     let hue = Math.floor(Math.random() * 361);
-    for (let x = -0.5; x < 1; x += 1) {
-      for (let y = -0.5; y < 1; y += 1) {
-        for (let z = -0.5; z < 1; z += 1) {
+    for (let x = centerX - 0.5; x < centerX + 1; x += 1) {
+      for (let y = centerY - 0.5; y < centerY + 1; y += 1) {
+        for (let z = centerZ - 0.5; z < centerZ + 1; z += 1) {
           let sphereColor = `hsl(${hue}, 100%, 50%)`;
           this.add(new Sphere(x, y, z, sphereColor));
           this.spheres.push({x: x, y: y, z: z, color: sphereColor});
@@ -28,15 +26,53 @@ class Cube extends THREE.Object3D {
       }
     }
 
-    edges.forEach((verticesPair) => {
+    this.edges.forEach((verticesPair) => {
       let geometry = new THREE.Geometry();
       geometry.vertices.push(
         new THREE.Vector3(this.spheres[verticesPair[0]].x, this.spheres[verticesPair[0]].y, this.spheres[verticesPair[0]].z),
         new THREE.Vector3(this.spheres[verticesPair[1]].x, this.spheres[verticesPair[1]].y, this.spheres[verticesPair[1]].z)
       );
       this.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000})));
-      lines.push(geometry.vertices);
+      this.lines.push(geometry.vertices);
     });
+  }
+
+  setEdgesColor() {
+    // update the picking ray with the camera and mouse position
+    raycaster.setFromCamera(mouse, camera);
+  
+    // calculate objects intersecting the picking ray
+    let intersects = raycaster.intersectObjects(scene.children, true);
+  
+    for (let i = 0; i < intersects.length; i++) {
+      // intersects[i].object.material.color.set( 0xff0000 );
+      if (intersects[i].object instanceof Sphere) {
+        this.lines.forEach((item) => {
+          if ((item[0].x === intersects[i].object.position.x &&
+            item[0].y === intersects[i].object.position.y &&
+            item[0].z === intersects[i].object.position.z)
+            ||
+            (item[1].x === intersects[i].object.position.x &&
+            item[1].y === intersects[i].object.position.y &&
+            item[1].z === intersects[i].object.position.z)) {
+  
+            // ***
+  
+            let geometry = new THREE.Geometry();
+            geometry.vertices.push(
+              new THREE.Vector3(item[0].x, item[0].y, item[0].z),
+              new THREE.Vector3(item[1].x, item[1].y, item[1].z)
+            );
+            console.log(intersects[i].object.material.color);
+            const edgeColor = `rgb(${Math.floor(intersects[i].object.material.color.r * 300)},${Math.floor(intersects[i].object.material.color.g * 300)},${Math.floor(intersects[i].object.material.color.b * 300)})`;
+            console.log(edgeColor);
+            this.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: edgeColor})));
+  
+            // ***
+          }
+        });
+      }
+    }
   }
 
   rotate() {
@@ -50,11 +86,14 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHei
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0xffffff);
 document.body.appendChild(renderer.domElement);
 
-const cube = new Cube();
+const cube = new Cube(1, 1, 1);
+const cube2 = new Cube(0, -1, 0);
 
 scene.add(cube);
+scene.add(cube2);
 cube.rotate();
 camera.position.z = 5;
 
@@ -69,45 +108,8 @@ function onMouseMove(event) {
 	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
   mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-  setColor()
-}
+  cube.setEdgesColor();
 
-function setColor() {
-  // update the picking ray with the camera and mouse position
-	raycaster.setFromCamera(mouse, camera);
-
-	// calculate objects intersecting the picking ray
-	let intersects = raycaster.intersectObjects(scene.children, true);
-
-	for (let i = 0; i < intersects.length; i++) {
-    // intersects[i].object.material.color.set( 0xff0000 );
-    if (intersects[i].object instanceof Sphere) {
-      lines.forEach((item) => {
-        if ((item[0].x === intersects[i].object.position.x &&
-          item[0].y === intersects[i].object.position.y &&
-          item[0].z === intersects[i].object.position.z)
-          ||
-          (item[1].x === intersects[i].object.position.x &&
-          item[1].y === intersects[i].object.position.y &&
-          item[1].z === intersects[i].object.position.z)) {
-
-          // ***
-
-          let geometry = new THREE.Geometry();
-          geometry.vertices.push(
-            new THREE.Vector3(item[0].x, item[0].y, item[0].z),
-            new THREE.Vector3(item[1].x, item[1].y, item[1].z)
-          );
-          console.log(intersects[i].object.material.color);
-          const edgeColor = `rgb(${Math.floor(intersects[i].object.material.color.r * 300)},${Math.floor(intersects[i].object.material.color.g * 300)},${Math.floor(intersects[i].object.material.color.b * 300)})`;
-          console.log(edgeColor);
-          cube.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: edgeColor})));
-
-          // ***
-        }
-      });
-    }
-	}
 }
 
 const animate = () => {
@@ -117,7 +119,6 @@ const animate = () => {
   // cube.rotation.y += 0.001;
 
   renderer.render(scene, camera);
-  renderer.setClearColor(0xffffff);
 };
 
 window.addEventListener('click', onMouseMove, false);
