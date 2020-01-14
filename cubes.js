@@ -34,12 +34,14 @@ class Cube extends THREE.Object3D {
         new THREE.Vector3(this.spheres[verticesPair[0]].x, this.spheres[verticesPair[0]].y, this.spheres[verticesPair[0]].z),
         new THREE.Vector3(this.spheres[verticesPair[1]].x, this.spheres[verticesPair[1]].y, this.spheres[verticesPair[1]].z)
       );
-      this.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0xfff40b})));
+      this.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000})));
       lines.push(geometry.vertices);
     });
+  }
 
-    // this.rotation.x += 0.5;
-    // this.rotation.y += 0.5;
+  rotate() {
+    this.rotation.x += 0.5;
+    this.rotation.y += 0.5;
   }
 }
 
@@ -53,6 +55,7 @@ document.body.appendChild(renderer.domElement);
 const cube = new Cube();
 
 scene.add(cube);
+cube.rotate();
 camera.position.z = 5;
 
 // Raycasting
@@ -95,20 +98,14 @@ function setColor() {
             new THREE.Vector3(item[0].x, item[0].y, item[0].z),
             new THREE.Vector3(item[1].x, item[1].y, item[1].z)
           );
-          // console.log(intersects[i].object.material.color);
-          const edgeColor = `rgb(${Math.floor(intersects[i].object.material.color.r)},${Math.floor(intersects[i].object.material.color.g)},${Math.floor(intersects[i].object.material.color.b)})`;
-
+          console.log(intersects[i].object.material.color);
+          const edgeColor = `rgb(${Math.floor(intersects[i].object.material.color.r * 300)},${Math.floor(intersects[i].object.material.color.g * 300)},${Math.floor(intersects[i].object.material.color.b * 300)})`;
+          console.log(edgeColor);
           cube.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: edgeColor})));
 
           // ***
         }
-        // console.log(item[0]);
-        // console.log(intersects[i].object.position);
       });
-      // console.log(intersects[i].object.uuid);
-      
-      // console.log(this.lines);
-      // this.THREE.Line.vertices[0] === intersects[i].object.position && console.log(this.THREE.Line.uuid);
     }
 	}
 }
@@ -116,10 +113,11 @@ function setColor() {
 const animate = () => {
   requestAnimationFrame(animate);
 
-  cube.rotation.x += 0.001;
-  cube.rotation.y += 0.001;
+  // cube.rotation.x += 0.001;
+  // cube.rotation.y += 0.001;
 
   renderer.render(scene, camera);
+  renderer.setClearColor(0xffffff);
 };
 
 window.addEventListener('click', onMouseMove, false);
