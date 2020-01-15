@@ -1,6 +1,6 @@
 class Sphere extends THREE.Mesh {
   constructor(x, y, z, color) {
-    super(new THREE.SphereGeometry(0.1, 13, 13), new THREE.MeshBasicMaterial({color: color}));
+    super(new THREE.SphereGeometry(0.13, 13, 13), new THREE.MeshBasicMaterial({color: color}));
     this.position.x = x;
     this.position.y = y;
     this.position.z = z;
@@ -32,22 +32,21 @@ class Cube extends THREE.Object3D {
         new THREE.Vector3(this.spheres[verticesPair[0]].x, this.spheres[verticesPair[0]].y, this.spheres[verticesPair[0]].z),
         new THREE.Vector3(this.spheres[verticesPair[1]].x, this.spheres[verticesPair[1]].y, this.spheres[verticesPair[1]].z)
       );
-      this.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000})));
-      this.lines.push(geometry.vertices);
+      const line = new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000}));
+      this.add(line);
+
+      this.lines.push({
+        vertices: geometry.vertices,
+        line,
+      });
     });
   }
 
-  setEdgesColor() {
-    // update the picking ray with the camera and mouse position
-    raycaster.setFromCamera(mouse, camera);
-  
-    // calculate objects intersecting the picking ray
-    let intersects = raycaster.intersectObjects(scene.children, true);
-  
+  setEdgesColor(intersects) {
     for (let i = 0; i < intersects.length; i++) {
-      // intersects[i].object.material.color.set( 0xff0000 );
       if (intersects[i].object instanceof Sphere) {
-        this.lines.forEach((item) => {
+        console.log("123");
+        this.lines.forEach(({vertices: item, line}) => {
           if ((item[0].x === intersects[i].object.position.x &&
             item[0].y === intersects[i].object.position.y &&
             item[0].z === intersects[i].object.position.z)
@@ -55,72 +54,71 @@ class Cube extends THREE.Object3D {
             (item[1].x === intersects[i].object.position.x &&
             item[1].y === intersects[i].object.position.y &&
             item[1].z === intersects[i].object.position.z)) {
-  
-            // ***
-  
-            let geometry = new THREE.Geometry();
-            geometry.vertices.push(
-              new THREE.Vector3(item[0].x, item[0].y, item[0].z),
-              new THREE.Vector3(item[1].x, item[1].y, item[1].z)
-            );
-            console.log(intersects[i].object.material.color);
-            const edgeColor = `rgb(${Math.floor(intersects[i].object.material.color.r * 300)},${Math.floor(intersects[i].object.material.color.g * 300)},${Math.floor(intersects[i].object.material.color.b * 300)})`;
-            console.log(edgeColor);
-            this.add(new THREE.Line( geometry, new THREE.LineBasicMaterial({color: edgeColor})));
-  
-            // ***
+              line.material.color.set(intersects[i].object.material.color);
           }
         });
+        break;
       }
     }
   }
 
-  rotate() {
-    this.rotation.x += 0.5;
-    this.rotation.y += 0.5;
+  rotate(angle) {
+    this.rotation.x += angle;
+    this.rotation.y += angle;
   }
 }
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0xffffff);
 document.body.appendChild(renderer.domElement);
 
-const cube = new Cube(1, 1, 1);
-const cube2 = new Cube(0, -1, 0);
+function createCubes(quantityOfCubes) {
+  const getRandomValue = () => Math.floor(-1.5 + Math.random() * 3.5);
 
-scene.add(cube);
-scene.add(cube2);
-cube.rotate();
-camera.position.z = 5;
+  const cubes = [];
 
-// Raycasting
-let raycaster = new THREE.Raycaster();
+  for(let i = 0; i < quantityOfCubes; i++) {
+    const cube = new Cube(getRandomValue(), getRandomValue(), getRandomValue());
+    scene.add(cube);
+    cube.rotate(getRandomValue()/2);
+
+    cubes.push(cube);
+  }
+
+  return cubes;
+}
+
+const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 function onMouseMove(event) {
 	// calculate mouse position in normalized device coordinates
 	// (-1 to +1) for both components
-
 	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
   mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  // update the picking ray with the camera and mouse position
+  raycaster.setFromCamera(mouse, camera);
+  // calculate objects intersecting the picking ray
+  let intersects = raycaster.intersectObjects(scene.children, true);
 
-  cube.setEdgesColor();
-
+  for (const cube of cubes) {
+      cube.setEdgesColor(intersects);
+  }
 }
 
 const animate = () => {
   requestAnimationFrame(animate);
-
-  // cube.rotation.x += 0.001;
-  // cube.rotation.y += 0.001;
-
   renderer.render(scene, camera);
 };
 
 window.addEventListener('click', onMouseMove, false);
 
+const n = prompt("Enter amount of cubes", 1);
+
+const cubes = createCubes(n);
 animate();
