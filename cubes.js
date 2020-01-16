@@ -4,6 +4,7 @@ class Sphere extends THREE.Mesh {
     this.position.x = x;
     this.position.y = y;
     this.position.z = z;
+    this.outgoingLines = [];
   }
 }
 
@@ -14,49 +15,57 @@ class Cube extends THREE.Object3D {
     this.spheres = [];
     this.lines = [];
 
+    // Creates spheres at cube's tops
     let hue = Math.floor(Math.random() * 361);
     for (let x = centerX - 0.5; x < centerX + 1; x += 1) {
       for (let y = centerY - 0.5; y < centerY + 1; y += 1) {
         for (let z = centerZ - 0.5; z < centerZ + 1; z += 1) {
           let sphereColor = `hsl(${hue}, 100%, 50%)`;
-          this.add(new Sphere(x, y, z, sphereColor));
-          this.spheres.push({x: x, y: y, z: z, color: sphereColor});
+          let currentSphere = new Sphere(x, y, z, sphereColor);
+          this.add(currentSphere);
+          this.spheres.push(currentSphere);
+          // this.spheres.push({x: x, y: y, z: z, color: sphereColor, outgoingLines: []});
           hue += 45;
         }
       }
     }
 
+    // Creates cube's edges
     this.edges.forEach((verticesPair) => {
       let geometry = new THREE.Geometry();
       geometry.vertices.push(
         new THREE.Vector3(this.spheres[verticesPair[0]].x, this.spheres[verticesPair[0]].y, this.spheres[verticesPair[0]].z),
         new THREE.Vector3(this.spheres[verticesPair[1]].x, this.spheres[verticesPair[1]].y, this.spheres[verticesPair[1]].z)
       );
-      const line = new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000}));
-      this.add(line);
-
-      this.lines.push({
-        vertices: geometry.vertices,
-        line,
-      });
+      const currentLine = new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000}));
+      this.add(currentLine);
+      
+      this.spheres[verticesPair[0]].outgoingLines.push(currentLine);
+      this.spheres[verticesPair[1]].outgoingLines.push(currentLine);
     });
   }
 
   setEdgesColor(intersects) {
     for (let i = 0; i < intersects.length; i++) {
       if (intersects[i].object instanceof Sphere) {
-        console.log("123");
-        this.lines.forEach(({vertices: item, line}) => {
-          if ((item[0].x === intersects[i].object.position.x &&
-            item[0].y === intersects[i].object.position.y &&
-            item[0].z === intersects[i].object.position.z)
-            ||
-            (item[1].x === intersects[i].object.position.x &&
-            item[1].y === intersects[i].object.position.y &&
-            item[1].z === intersects[i].object.position.z)) {
-              line.material.color.set(intersects[i].object.material.color);
-          }
-        });
+        // console.log("123");
+        // this.lines.forEach(({vertices: item, line}) => {
+        //   if ((item[0].x === intersects[i].object.position.x &&
+        //     item[0].y === intersects[i].object.position.y &&
+        //     item[0].z === intersects[i].object.position.z)
+        //     ||
+        //     (item[1].x === intersects[i].object.position.x &&
+        //     item[1].y === intersects[i].object.position.y &&
+        //     item[1].z === intersects[i].object.position.z)) {
+        //       line.material.color.set(intersects[i].object.material.color);
+        //   }
+        // });
+
+        console.log(intersects[i].object);
+
+        // intersects[i].object.outgoingLines[0].material.color.set(intersects[i].object.material.color);
+        // intersects[i].object.outgoingLines[1].material.color.set(intersects[i].object.material.color);
+        // intersects[i].object.outgoingLines[2].material.color.set(intersects[i].object.material.color);
         break;
       }
     }
@@ -95,6 +104,8 @@ function createCubes(quantityOfCubes) {
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+let isAlreadyColored = false;
+
 
 function onMouseMove(event) {
 	// calculate mouse position in normalized device coordinates
