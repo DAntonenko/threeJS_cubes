@@ -13,7 +13,6 @@ class Cube extends THREE.Object3D {
     super(new THREE.Group());
     this.edges = [[0, 1], [1, 3], [2, 0], [3, 2], [4, 5], [5, 7], [6, 4], [7, 6], [0, 4], [1, 5], [2, 6], [3, 7]]; // Serial numbers of spheres (in 'this.spheres' array) which mast be connected with edge lines
     this.spheres = [];
-    this.lines = [];
 
     // Creates spheres at cube's tops
     let hue = Math.floor(Math.random() * 361);
@@ -24,7 +23,6 @@ class Cube extends THREE.Object3D {
           let currentSphere = new Sphere(x, y, z, sphereColor);
           this.add(currentSphere);
           this.spheres.push(currentSphere);
-          // this.spheres.push({x: x, y: y, z: z, color: sphereColor, outgoingLines: []});
           hue += 45;
         }
       }
@@ -32,10 +30,13 @@ class Cube extends THREE.Object3D {
 
     // Creates cube's edges
     this.edges.forEach((verticesPair) => {
-      let geometry = new THREE.Geometry();
+      const geometry = new THREE.Geometry();
+      const vertice0 = this.spheres[verticesPair[0]].position;
+      const vertice1 = this.spheres[verticesPair[1]].position;
+
       geometry.vertices.push(
-        new THREE.Vector3(this.spheres[verticesPair[0]].x, this.spheres[verticesPair[0]].y, this.spheres[verticesPair[0]].z),
-        new THREE.Vector3(this.spheres[verticesPair[1]].x, this.spheres[verticesPair[1]].y, this.spheres[verticesPair[1]].z)
+        new THREE.Vector3(vertice0.x, vertice0.y, vertice0.z),
+        new THREE.Vector3(vertice1.x, vertice1.y, vertice1.z)
       );
       const currentLine = new THREE.Line( geometry, new THREE.LineBasicMaterial({color: 0x000000}));
       this.add(currentLine);
@@ -48,24 +49,9 @@ class Cube extends THREE.Object3D {
   setEdgesColor(intersects) {
     for (let i = 0; i < intersects.length; i++) {
       if (intersects[i].object instanceof Sphere) {
-        // console.log("123");
-        // this.lines.forEach(({vertices: item, line}) => {
-        //   if ((item[0].x === intersects[i].object.position.x &&
-        //     item[0].y === intersects[i].object.position.y &&
-        //     item[0].z === intersects[i].object.position.z)
-        //     ||
-        //     (item[1].x === intersects[i].object.position.x &&
-        //     item[1].y === intersects[i].object.position.y &&
-        //     item[1].z === intersects[i].object.position.z)) {
-        //       line.material.color.set(intersects[i].object.material.color);
-        //   }
-        // });
-
-        console.log(intersects[i].object);
-
-        // intersects[i].object.outgoingLines[0].material.color.set(intersects[i].object.material.color);
-        // intersects[i].object.outgoingLines[1].material.color.set(intersects[i].object.material.color);
-        // intersects[i].object.outgoingLines[2].material.color.set(intersects[i].object.material.color);
+        intersects[i].object.outgoingLines[0].material.color.set(intersects[i].object.material.color);
+        intersects[i].object.outgoingLines[1].material.color.set(intersects[i].object.material.color);
+        intersects[i].object.outgoingLines[2].material.color.set(intersects[i].object.material.color);
         break;
       }
     }
@@ -94,7 +80,7 @@ function createCubes(quantityOfCubes) {
   for(let i = 0; i < quantityOfCubes; i++) {
     const cube = new Cube(getRandomValue(), getRandomValue(), getRandomValue());
     scene.add(cube);
-    cube.rotate(getRandomValue()/2);
+    cube.rotate(getRandomValue()/4 + getRandomValue()/4);
 
     cubes.push(cube);
   }
@@ -125,6 +111,9 @@ function onMouseMove(event) {
 const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
+
+  // scene.rotation.x += 0.0005;
+  // scene.rotation.y += 0.0005;
 };
 
 window.addEventListener('click', onMouseMove, false);
