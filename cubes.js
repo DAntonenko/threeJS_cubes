@@ -112,13 +112,13 @@ const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 
-  // scene.rotation.x += 0.0005;
-  // scene.rotation.y += 0.0005;
+  scene.rotation.x += 0.0005;
+  scene.rotation.y += 0.0005;
 };
 
 window.addEventListener('click', onMouseMove, false);
 
-const n = prompt("Enter amount of cubes", 1);
+const n = prompt("You may click the spheres at cube's tops to colorize the corresponding faces to the color of the sphere\n\nEnter amount of cubes:\n\n", 5);
 
 const cubes = createCubes(n);
 animate();
